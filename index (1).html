@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>🎹 엘림 피아노 연습 대시보드</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Noto Sans KR',sans-serif;background:#f4f3ef;color:#1a1a1a;min-height:100vh;padding-bottom:100px;}
+input,button,textarea{font-family:'Noto Sans KR',sans-serif;}
+.header{background:#1a1a1a;color:#fff;padding:12px 14px 10px;position:sticky;top:0;z-index:100;}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.app-title{font-size:14px;font-weight:700;}
+.header-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;}
+.week-badge{font-size:10px;background:#333;padding:3px 8px;border-radius:10px;color:#aaa;}
+.role-badge{font-size:10px;padding:3px 8px;border-radius:10px;font-weight:700;display:none;}
+.role-badge.show{display:inline;}
+.role-badge.director{background:#7c3aed;color:#fff;}
+.role-badge.student{background:#1d4ed8;color:#fff;}
+.login-btn{font-size:10px;background:#2a2a2a;border:none;color:#aaa;padding:3px 9px;border-radius:10px;cursor:pointer;}
+.tab-area{display:flex;gap:5px;}
+.stab{flex:1;padding:6px 0;text-align:center;font-size:11px;font-weight:600;border-radius:7px;cursor:pointer;background:#2a2a2a;color:#666;border:none;transition:all .15s;white-space:nowrap;}
+.stab.on{background:#dbeafe;color:#1d4ed8;}
+.stab.exam-tab.on{background:#fef9c3;color:#854d0e;}
+.sync-bar{font-size:11px;padding:6px 14px;display:flex;align-items:center;gap:6px;min-height:28px;background:#1e3a5f;color:#93c5fd;}
+.sync-bar.ok{background:#052e16;color:#86efac;}
+.sync-bar.warn{background:#451a03;color:#fcd34d;}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+.readonly-banner{display:none;background:#fff7ed;border-bottom:1px solid #fed7aa;padding:7px 14px;font-size:11px;color:#92400e;text-align:center;}
+.readonly-banner.show{display:block;}
+.summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px 12px 0;}
+.card{background:#fff;border-radius:10px;padding:12px;}
+.card.full{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;}
+.clbl{font-size:10px;color:#888;margin-bottom:5px;font-weight:600;}
+.cval{font-size:22px;font-weight:700;color:#1a1a1a;line-height:1;}
+.cval.exceed{color:#16a34a;}.cval.zero{color:#ccc;}
+.cunit{font-size:12px;font-weight:400;color:#888;margin-left:1px;}
+.goal-row{display:flex;align-items:center;gap:5px;}
+.ginp{width:48px;border:none;border-bottom:2px solid #eee;font-size:20px;font-weight:700;background:transparent;color:#1a1a1a;outline:none;padding:0;}
+.ginp:focus{border-color:#3b82f6;}.ginp:disabled{color:#aaa;border-color:#f0f0f0;}
+.prog-bg{height:7px;background:#f0f0f0;border-radius:4px;overflow:hidden;margin-top:6px;}
+.prog-fill{height:100%;border-radius:4px;transition:width .4s;}
+.prog-fill.blue{background:#3b82f6;}.prog-fill.green{background:#16a34a;}.prog-fill.amber{background:#f59e0b;}
+.pct-row{display:flex;justify-content:space-between;margin-top:3px;}
+.pct-lbl{font-size:10px;color:#888;}.pct-over{font-size:10px;color:#16a34a;font-weight:700;}
+.ebadge{font-size:9px;font-weight:700;background:#dcfce7;color:#16a34a;padding:1px 5px;border-radius:5px;margin-left:3px;}
+.ox-row{display:flex;gap:6px;margin-top:6px;}
+.ox-btn{flex:1;padding:7px 0;border-radius:7px;border:1.5px solid #eee;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:#888;transition:all .15s;}
+.ox-btn.ao{background:#d1fae5;border-color:#059669;color:#059669;}.ox-btn.ax{background:#fee2e2;border-color:#dc2626;color:#dc2626;}
+.ox-btn:disabled{opacity:0.45;cursor:default;}
+.streak-items{display:flex;gap:4px;flex:1;justify-content:flex-end;}
+.sdot{width:22px;height:22px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#ccc;}
+.sdot.done{background:#dbeafe;color:#1d4ed8;}.sdot.exceed{background:#dcfce7;color:#16a34a;}
+.sdlbl{font-size:8px;color:#ccc;margin-top:2px;text-align:center;}.sdlbl.done{color:#3b82f6;}
+.sec-lbl{font-size:10px;font-weight:700;color:#999;padding:12px 12px 6px;letter-spacing:0.5px;}
+.days-wrap{padding:0 12px;display:flex;flex-direction:column;gap:8px;}
+.day-card{background:#fff;border-radius:10px;overflow:hidden;}
+.day-head{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border-bottom:1px solid #f5f5f5;}
+.dleft{display:flex;align-items:center;gap:7px;}
+.ddot{width:7px;height:7px;border-radius:50%;background:#e5e5e5;flex-shrink:0;}
+.ddot.done{background:#3b82f6;}.ddot.exceed{background:#16a34a;}
+.dname{font-size:13px;font-weight:700;}
+.dtag{font-size:9px;background:#dcfce7;color:#16a34a;padding:1px 5px;border-radius:5px;font-weight:700;}
+.dright{display:flex;align-items:center;gap:8px;}
+.dtotal-item{display:flex;flex-direction:column;align-items:center;gap:1px;}
+.dtotal-sub{font-size:8px;color:#aaa;}
+.dtotal{font-size:12px;font-weight:700;color:#3b82f6;}
+.dtotal.zero{color:#ccc;font-weight:400;}.dtotal.exceed{color:#16a34a;}.dtotal.study{color:#8b5cf6;}
+.cam-check{display:flex;flex-direction:column;align-items:center;gap:1px;}
+.cam-sq{width:24px;height:24px;border-radius:6px;border:1.5px solid #eee;background:#f9f9f7;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;transition:all .12s;}
+.cam-sq.on{background:#fef9c3;border-color:#ca8a04;}
+.cam-sq.disabled{opacity:0.4;cursor:default;pointer-events:none;}
+.cam-sub{font-size:8px;color:#aaa;}
+.day-body{padding:10px 12px 10px;}
+.stitle{font-size:9px;font-weight:700;color:#bbb;letter-spacing:0.5px;margin-bottom:6px;}
+.hgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+.hbtn{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;padding:5px 1px;border-radius:7px;background:#f9f9f7;border:1.5px solid #eee;transition:all .12s;user-select:none;}
+.hbtn.on{background:#dbeafe;border-color:#3b82f6;}
+.hbtn.study.on{background:#ede9fe;border-color:#8b5cf6;}
+.hbtn.disabled{opacity:0.4;cursor:default;pointer-events:none;}
+.hbtn-h{font-size:10px;font-weight:700;color:#bbb;}
+.hbtn.on .hbtn-h{color:#1d4ed8;}.hbtn.study.on .hbtn-h{color:#7c3aed;}
+.hbtn-sq{width:12px;height:12px;border-radius:2px;border:1.5px solid #ddd;background:#fff;position:relative;}
+.hbtn.on .hbtn-sq{background:#3b82f6;border-color:#3b82f6;}
+.hbtn.on .hbtn-sq::after,.hbtn.study.on .hbtn-sq::after{content:'';position:absolute;top:50%;left:50%;width:4px;height:6px;border:1.5px solid #fff;border-top:none;border-left:none;transform:translate(-60%,-60%) rotate(45deg);}
+.hbtn.study.on .hbtn-sq{background:#8b5cf6;border-color:#8b5cf6;}
+.learn-sec{border-top:1px solid #f5f5f5;padding-top:8px;margin-top:6px;}
+.srow{display:flex;align-items:center;gap:5px;margin-top:8px;margin-bottom:8px;}
+.slbl{font-size:10px;color:#888;white-space:nowrap;font-weight:600;}
+.sinp{flex:1;border:none;border-bottom:1.5px solid #eee;font-size:11px;color:#1a1a1a;padding:2px 3px;outline:none;background:transparent;}
+.sinp:focus{border-color:#3b82f6;}.sinp:disabled{color:#aaa;}
+.erow{display:flex;gap:5px;margin-bottom:4px;}
+.ei{flex:1;display:flex;align-items:center;justify-content:space-between;background:#f9f9f7;border-radius:7px;padding:6px 7px;cursor:pointer;border:1.5px solid #eee;transition:all .12s;}
+.ei.on{background:#d1fae5;border-color:#059669;}.ei.disabled{opacity:0.4;cursor:default;pointer-events:none;}
+.elbl{font-size:10px;font-weight:600;color:#888;}.ei.on .elbl{color:#059669;}
+.csq{width:12px;height:12px;border-radius:2px;border:1.5px solid #ccc;background:#fff;flex-shrink:0;position:relative;}
+.ei.on .csq{background:#059669;border-color:#059669;}
+.ei.on .csq::after{content:'';position:absolute;top:50%;left:50%;width:4px;height:6px;border:1.5px solid #fff;border-top:none;border-left:none;transform:translate(-60%,-60%) rotate(45deg);}
+.exam-panel-wrap{padding:12px;}
+.exam-card{background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;}
+.exam-name{font-size:14px;font-weight:700;margin-bottom:3px;}
+.exam-sub{font-size:11px;color:#888;margin-bottom:12px;}
+.exam-note{border:1px solid #eee;border-radius:8px;width:100%;font-size:12px;padding:10px;outline:none;background:#fafafa;resize:none;min-height:80px;line-height:1.6;}
+.exam-note:disabled{color:#aaa;}
+.exam-status{font-size:11px;color:#3b82f6;margin-top:6px;}
+.fab{position:fixed;bottom:20px;right:14px;left:14px;background:#7c3aed;color:#fff;border:none;border-radius:12px;padding:15px;font-size:13px;font-weight:700;cursor:pointer;display:none;align-items:center;justify-content:center;gap:7px;box-shadow:0 4px 20px rgba(124,58,237,0.35);transition:transform .12s;}
+.fab.show{display:flex;}.fab:active{transform:scale(0.98);}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:200;align-items:flex-end;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:18px 18px 0 0;padding:18px 16px 44px;width:100%;max-height:88vh;overflow-y:auto;}
+.mhandle{width:32px;height:3px;background:#e5e5e5;border-radius:2px;margin:0 auto 14px;}
+.mtitle{font-size:15px;font-weight:700;margin-bottom:3px;}
+.msub{font-size:11px;color:#888;margin-bottom:12px;}
+.fbox{background:#f9f9f7;border-radius:10px;padding:14px;font-size:12px;line-height:1.9;color:#1a1a1a;white-space:pre-wrap;border:1px solid #eee;}
+.mbtns{display:flex;gap:7px;margin-top:12px;}
+.mbtn{flex:1;padding:13px;border-radius:9px;border:none;font-size:12px;font-weight:700;cursor:pointer;}
+.mbtn.copy{background:#1a1a1a;color:#fff;}.mbtn.cls{background:#f0f0f0;color:#555;}
+.pin-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;align-items:center;justify-content:center;padding:20px;}
+.pin-modal-bg.open{display:flex;}
+.pin-modal{background:#fff;border-radius:16px;padding:22px 18px;width:100%;max-width:300px;}
+.pin-title{font-size:15px;font-weight:700;margin-bottom:3px;}
+.pin-sub{font-size:12px;color:#888;margin-bottom:14px;}
+.pin-who{display:flex;flex-direction:column;gap:7px;}
+.pwho-btn{padding:11px 12px;border-radius:9px;border:1.5px solid #eee;font-size:13px;font-weight:600;cursor:pointer;background:#fff;text-align:left;display:flex;align-items:center;justify-content:space-between;transition:all .12s;}
+.pwho-btn:hover{background:#f5f5f5;}
+.pwho-btn.director{border-color:#7c3aed;color:#7c3aed;}
+.pin-inp-wrap{display:none;}
+.pin-inp-wrap.show{display:block;}
+.pin-back{font-size:11px;color:#888;cursor:pointer;margin-bottom:10px;display:inline-flex;align-items:center;gap:3px;}
+.pin-inp{width:100%;border:1.5px solid #eee;border-radius:8px;padding:12px;font-size:16px;text-align:center;letter-spacing:4px;outline:none;margin-bottom:8px;}
+.pin-inp:focus{border-color:#7c3aed;}
+.pin-err{font-size:11px;color:#dc2626;margin-bottom:10px;min-height:16px;}
+.pin-btns{display:flex;gap:7px;}
+.pin-btn{flex:1;padding:12px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;}
+.pin-btn.ok{background:#7c3aed;color:#fff;}.pin-btn.cancel{background:#f0f0f0;color:#555;}
+.change-pw-wrap{margin-top:12px;padding-top:12px;border-top:1px solid #f0f0f0;display:none;}
+.change-pw-wrap.show{display:block;}
+.change-pw-title{font-size:11px;font-weight:700;color:#888;margin-bottom:8px;}
+.change-pw-row{display:flex;gap:6px;}
+.change-pw-inp{flex:1;border:1.5px solid #eee;border-radius:7px;padding:9px;font-size:14px;text-align:center;outline:none;}
+.change-pw-inp:focus{border-color:#7c3aed;}
+.change-pw-btn{padding:9px 14px;border-radius:7px;border:none;background:#7c3aed;color:#fff;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.toast{position:fixed;top:64px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;font-size:11px;padding:7px 14px;border-radius:16px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:400;white-space:nowrap;}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <div class="app-title">🎹 엘림 피아노 연습 대시보드</div>
+    <div class="header-right">
+      <div class="week-badge" id="wbadge"></div>
+      <span class="role-badge" id="role-badge"></span>
+      <button class="login-btn" id="login-btn">로그인</button>
+    </div>
+  </div>
+  <div class="tab-area" id="stabs"></div>
+</div>
+
+<div class="sync-bar" id="sync-bar"><div class="sync-dot"></div><span id="sync-msg">불러오는 중...</span></div>
+<div class="readonly-banner" id="readonly-banner">👀 보기 전용 — 본인 비밀번호로 로그인하면 입력할 수 있어요</div>
+
+<div id="practice-panel">
+  <div class="summary" id="summary"></div>
+  <div class="sec-lbl">요일별 연습</div>
+  <div class="days-wrap" id="days"></div>
+</div>
+<div id="exam-panel" style="display:none;">
+  <div class="exam-panel-wrap" id="exam-content"></div>
+</div>
+
+<button class="fab" id="fab">📋 학부모 피드백 리포트 생성</button>
+
+<div class="modal-bg" id="mbg">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle">학부모 피드백 리포트</div>
+    <div class="msub" id="msub"></div>
+    <div class="fbox" id="fbox"></div>
+    <div class="mbtns">
+      <button class="mbtn copy" id="copybtn">📋 복사하기</button>
+      <button class="mbtn cls" id="clsbtn">닫기</button>
+    </div>
+  </div>
+</div>
+
+<div class="pin-modal-bg" id="pin-bg">
+  <div class="pin-modal">
+    <div class="pin-title" id="pin-title">🔐 로그인</div>
+    <div class="pin-sub" id="pin-sub">누구로 로그인할까요?</div>
+    <div class="pin-who" id="pin-who">
+      <button class="pwho-btn director" data-role="director">🏫 원장 <span style="font-size:10px;opacity:0.6;">엘림 피아노</span></button>
+      <button class="pwho-btn" data-role="0">🎹 원희재</button>
+      <button class="pwho-btn" data-role="1">🎹 전서윤</button>
+      <button class="pwho-btn" data-role="2">🎹 박서현</button>
+    </div>
+    <div class="pin-inp-wrap" id="pin-inp-wrap">
+      <div class="pin-back" id="pin-back">← 뒤로</div>
+      <input class="pin-inp" id="pin-inp" type="password" maxlength="20" placeholder="비밀번호">
+      <div class="pin-err" id="pin-err"></div>
+      <div class="pin-btns">
+        <button class="pin-btn cancel" id="pin-cancel">취소</button>
+        <button class="pin-btn ok" id="pin-ok">확인</button>
+      </div>
+      <div class="change-pw-wrap" id="change-pw-wrap">
+        <div class="change-pw-title">🔑 내 비밀번호 변경</div>
+        <div class="change-pw-row">
+          <input class="change-pw-inp" id="new-pw-inp" type="password" maxlength="20" placeholder="새 비밀번호">
+          <button class="change-pw-btn" id="change-pw-btn">변경</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBFKJH30AXSJlGGk6CYmLS3Hi4-WgmqwWk",
+  authDomain: "elimpiano-327e3.firebaseapp.com",
+  projectId: "elimpiano-327e3",
+  storageBucket: "elimpiano-327e3.firebasestorage.app",
+  messagingSenderId: "331521238468",
+  appId: "1:331521238468:web:31e79d6587fcc423c3b091",
+  measurementId: "G-NM3MTSNNNF"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const DEFAULT_PW = { director:'엘림1004', 0:'1111', 1:'2222', 2:'3333' };
+const PW_KEY = 'elim_piano_pw';
+const students = [{name:'원희재'},{name:'전서윤'},{name:'박서현'}];
+const days = ['일','월','화','수','목','금','토'];
+const hours = [1,2,3,4,5,6,7];
+const extras = ['인강','문제집','영단어'];
+
+let passwords = {...DEFAULT_PW};
+let loginRole = null;
+let cur = 0;
+let saveTimer = null;
+
+try{ const pw=localStorage.getItem(PW_KEY); if(pw) passwords={...DEFAULT_PW,...JSON.parse(pw)}; }catch(e){}
+function savePw(){ try{localStorage.setItem(PW_KEY,JSON.stringify(passwords));}catch(e){} }
+
+function getWeekSunday(d){ const dt=new Date(d);dt.setHours(0,0,0,0);dt.setDate(dt.getDate()-dt.getDay());return dt.toISOString().slice(0,10); }
+const now=new Date();
+const sunD=new Date(now);sunD.setDate(now.getDate()-now.getDay());
+const satD=new Date(sunD);satD.setDate(sunD.getDate()+6);
+const weekStr=`${sunD.getMonth()+1}/${sunD.getDate()} ~ ${satD.getMonth()+1}/${satD.getDate()}`;
+const currentWeek=getWeekSunday(now);
+document.getElementById('wbadge').textContent=weekStr;
+
+function defaultStudent(){ return {
+  pianoChecks:days.map(()=>hours.map(()=>false)),
+  studyChecks:days.map(()=>hours.map(()=>false)),
+  subjects:days.map(()=>''),
+  extras:days.map(()=>extras.map(()=>false)),
+  filmChecks:days.map(()=>false),
+  examNote:'',
+  goal:'',ox:null
+};}
+
+let state = { weekStart:currentWeek, students:students.map(()=>defaultStudent()) };
+
+function setSyncStatus(t,m){ document.getElementById('sync-bar').className='sync-bar '+(t||''); document.getElementById('sync-msg').textContent=m; }
+function showToast(msg){ const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000); }
+
+async function saveState(){
+  try{
+    setSyncStatus('','저장 중...');
+    state.weekStart=currentWeek;
+    await setDoc(doc(db,'weeks',currentWeek), JSON.parse(JSON.stringify(state)));
+    setSyncStatus('ok','저장 완료 ✓ '+new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}));
+  }catch(e){ setSyncStatus('warn','저장 실패: '+e.message); }
+}
+function scheduleSave(){ clearTimeout(saveTimer);setSyncStatus('','저장 중...');saveTimer=setTimeout(saveState,600); }
+
+function fixState(s){
+  s.students.forEach(st=>{
+    if(!st.studyChecks)st.studyChecks=days.map(()=>hours.map(()=>false));
+    if(!st.filmChecks)st.filmChecks=days.map(()=>false);
+    if(!st.examNote)st.examNote='';
+  });
+  return s;
+}
+
+async function loadState(){
+  try{
+    setSyncStatus('','데이터 불러오는 중...');
+    const snap=await getDoc(doc(db,'weeks',currentWeek));
+    if(snap.exists()){ state=fixState(snap.data()); setSyncStatus('ok','불러오기 완료 ✓'); }
+    else{ state={weekStart:currentWeek,students:students.map(()=>defaultStudent())}; setSyncStatus('ok','새 주 시작 ✓'); }
+    // 실시간 구독
+    onSnapshot(doc(db,'weeks',currentWeek),(snap)=>{
+      if(snap.exists()&&!snap.metadata.hasPendingWrites){ state=fixState(snap.data()); renderAll(); setSyncStatus('ok','실시간 업데이트 ✓'); }
+    });
+  }catch(e){ setSyncStatus('warn','연결 오류: '+e.message); }
+  renderAll();
+}
+
+function canEdit(si){ return loginRole==='director'||(typeof loginRole==='number'&&loginRole===si); }
+
+function updateLoginUI(){
+  const badge=document.getElementById('role-badge'),btn=document.getElementById('login-btn'),fab=document.getElementById('fab'),banner=document.getElementById('readonly-banner');
+  if(loginRole===null){ badge.className='role-badge';btn.textContent='로그인';fab.classList.remove('show');banner.classList.add('show'); }
+  else if(loginRole==='director'){ badge.className='role-badge director show';badge.textContent='원장';btn.textContent='로그아웃';fab.classList.add('show');banner.classList.remove('show'); }
+  else{ badge.className='role-badge student show';badge.textContent=students[loginRole].name;btn.textContent='로그아웃';fab.classList.remove('show');banner.classList.remove('show'); }
+}
+
+function getPMax(si,di){let m=0;state.students[si].pianoChecks[di].forEach((v,i)=>{if(v&&hours[i]>m)m=hours[i];});return m;}
+function getSMax(si,di){let m=0;state.students[si].studyChecks[di].forEach((v,i)=>{if(v&&hours[i]>m)m=hours[i];});return m;}
+function getPTotal(si){let t=0;days.forEach((_,di)=>{t+=getPMax(si,di);});return t;}
+function getSTotal(si){let t=0;days.forEach((_,di)=>{t+=getSMax(si,di);});return t;}
+function getActiveDays(si){return days.filter((_,di)=>getPMax(si,di)>0||getSMax(si,di)>0);}
+function getExtraCount(si){let c=0;state.students[si].extras.forEach(d=>d.forEach(v=>{if(v)c++;}));return c;}
+
+function renderTabs(){
+  const el=document.getElementById('stabs');el.innerHTML='';
+  students.forEach((s,si)=>{
+    const b=document.createElement('button');b.className='stab'+(cur===si?' on':'');b.textContent=s.name;
+    b.onclick=()=>{cur=si;document.getElementById('practice-panel').style.display='';document.getElementById('exam-panel').style.display='none';renderAll();};
+    el.appendChild(b);
+  });
+  const ex=document.createElement('button');ex.className='stab exam-tab'+(cur===3?' on':'');ex.textContent='모의평가';
+  ex.onclick=()=>{cur=3;document.getElementById('practice-panel').style.display='none';document.getElementById('exam-panel').style.display='';renderExam();renderTabs();};
+  el.appendChild(ex);
+}
+
+function renderSummary(){
+  const si=cur;if(si===3)return;
+  const st=state.students[si];
+  const pTotal=getPTotal(si),sTotal=getSTotal(si),goal=parseInt(st.goal)||0;
+  const rawPct=goal>0?Math.round(pTotal/goal*100):0;
+  const isExceed=goal>0&&pTotal>goal,overH=isExceed?pTotal-goal:0;
+  const fillPct=goal>0?Math.min(100,rawPct):0;
+  const fillCls=rawPct>=100?'green':rawPct>=70?'blue':'amber';
+  const editable=canEdit(si);
+  document.getElementById('summary').innerHTML=`
+    <div class="card"><div class="clbl">🎹 피아노 연습</div><div class="cval${pTotal===0?' zero':''}">${pTotal}<span class="cunit">h</span></div><div style="font-size:10px;color:#8b5cf6;margin-top:3px;">📚 학습 ${sTotal}h</div></div>
+    <div class="card"><div class="clbl">목표 (피아노)</div><div class="goal-row"><input class="ginp" id="ginp" type="number" min="0" max="99" placeholder="0" value="${st.goal}" ${editable?'':'disabled'}><span class="cunit">h</span></div><div style="font-size:10px;color:#aaa;margin-top:5px;">${editable?'목표를 입력하세요':'읽기 전용'}</div></div>
+    <div class="card"><div class="clbl">달성률${isExceed?'<span class="ebadge">초과!</span>':''}</div><div class="cval${isExceed?' exceed':rawPct===0?' zero':''}">${goal>0?rawPct:'-'}<span class="cunit">${goal>0?'%':''}</span></div><div class="prog-bg"><div class="prog-fill ${fillCls}" style="width:${fillPct}%"></div></div><div class="pct-row"><span class="pct-lbl">${pTotal}h/${goal||'?'}h</span>${isExceed?`<span class="pct-over">+${overH}h 🎉</span>`:''}</div></div>
+    <div class="card"><div class="clbl">달성 여부</div><div class="ox-row"><button class="ox-btn${st.ox==='o'?' ao':''}" id="ob" ${editable?'':'disabled'}>✓ 달성</button><button class="ox-btn${st.ox==='x'?' ax':''}" id="xb" ${editable?'':'disabled'}>✕ 미달</button></div></div>
+    <div class="card full"><div style="font-size:10px;font-weight:700;color:#aaa;white-space:nowrap;">이번 주</div><div class="streak-items">${days.map((d,di)=>{const m=getPMax(si,di);const cls=m>0?(goal>0&&m>=Math.ceil(goal/7)?'exceed':'done'):'';return`<div style="display:flex;flex-direction:column;align-items:center;gap:2px;"><div class="sdot${cls?' '+cls:''}">${m>0?m+'h':''}</div><div class="sdlbl${m>0?' done':''}">${d}</div></div>`;}).join('')}</div></div>`;
+  if(editable){
+    document.getElementById('ginp').addEventListener('input',function(){state.students[cur].goal=this.value;scheduleSave();renderSummary();});
+    document.getElementById('ob').onclick=()=>{state.students[cur].ox=state.students[cur].ox==='o'?null:'o';scheduleSave();renderAll();};
+    document.getElementById('xb').onclick=()=>{state.students[cur].ox=state.students[cur].ox==='x'?null:'x';scheduleSave();renderAll();};
+  }
+}
+
+function buildHGrid(si,di,type){
+  const checks=type==='piano'?state.students[si].pianoChecks:state.students[si].studyChecks;
+  const editable=canEdit(si);
+  const grid=document.createElement('div');grid.className='hgrid';
+  hours.forEach((h,hi)=>{
+    const b=document.createElement('div');
+    b.className='hbtn'+(type==='study'?' study':'')+(checks[di][hi]?' on':'')+(editable?'':' disabled');
+    b.innerHTML=`<div class="hbtn-h">${h}h</div><div class="hbtn-sq"></div>`;
+    if(editable) b.onclick=()=>{if(type==='piano')state.students[cur].pianoChecks[di][hi]=!state.students[cur].pianoChecks[di][hi];else state.students[cur].studyChecks[di][hi]=!state.students[cur].studyChecks[di][hi];scheduleSave();renderAll();};
+    grid.appendChild(b);
+  });
+  return grid;
+}
+
+function renderDays(){
+  const si=cur;if(si===3)return;
+  const st=state.students[si];
+  const goal=parseInt(st.goal)||0,gpd=goal>0?Math.ceil(goal/7):0;
+  const editable=canEdit(si);
+  const el=document.getElementById('days');el.innerHTML='';
+  days.forEach((d,di)=>{
+    const pm=getPMax(si,di),sm=getSMax(si,di);
+    const isExceed=gpd>0&&pm>gpd,isDone=pm>0||sm>0;
+    const card=document.createElement('div');card.className='day-card';
+    const head=document.createElement('div');head.className='day-head';
+    head.innerHTML=`
+      <div class="dleft"><div class="ddot${isExceed?' exceed':isDone?' done':''}"></div><div class="dname">${d}요일</div>${isExceed?'<span class="dtag">초과</span>':''}</div>
+      <div class="dright">
+        <div class="dtotal-item"><div class="dtotal-sub">🎹</div><div class="dtotal${isExceed?' exceed':pm===0?' zero':''}">${pm>0?pm+'h':'-'}</div></div>
+        <div class="dtotal-item"><div class="dtotal-sub">📚</div><div class="dtotal study${sm===0?' zero':''}">${sm>0?sm+'h':'-'}</div></div>
+        <div class="cam-check"><div class="cam-sq${st.filmChecks[di]?' on':''}${editable?'':' disabled'}" data-di="${di}">📷</div><div class="cam-sub">촬영</div></div>
+      </div>`;
+    if(editable) head.querySelector('.cam-sq').onclick=function(){const di2=+this.dataset.di;state.students[cur].filmChecks[di2]=!state.students[cur].filmChecks[di2];scheduleSave();renderAll();};
+    const body=document.createElement('div');body.className='day-body';
+    const ps=document.createElement('div');
+    const pt=document.createElement('div');pt.className='stitle';pt.textContent='🎹 피아노 연습량';
+    ps.appendChild(pt);ps.appendChild(buildHGrid(si,di,'piano'));body.appendChild(ps);
+    const ls=document.createElement('div');ls.className='learn-sec';
+    const lt=document.createElement('div');lt.className='stitle';lt.textContent='📚 학습량';ls.appendChild(lt);
+    ls.appendChild(buildHGrid(si,di,'study'));
+    const sr=document.createElement('div');sr.className='srow';sr.innerHTML=`<span class="slbl">과목</span>`;
+    const sinp=document.createElement('input');sinp.className='sinp';sinp.type='text';sinp.placeholder='학습 과목 입력';sinp.value=st.subjects[di];
+    if(!editable)sinp.disabled=true;
+    sinp.addEventListener('input',function(){state.students[cur].subjects[di]=this.value;scheduleSave();});
+    sr.appendChild(sinp);ls.appendChild(sr);
+    const er=document.createElement('div');er.className='erow';
+    extras.forEach((ex,ei)=>{
+      const it=document.createElement('div');it.className='ei'+(st.extras[di][ei]?' on':'')+(editable?'':' disabled');
+      it.innerHTML=`<span class="elbl">${ex}</span><div class="csq"></div>`;
+      if(editable)it.onclick=()=>{state.students[cur].extras[di][ei]=!state.students[cur].extras[di][ei];scheduleSave();renderAll();};
+      er.appendChild(it);
+    });
+    ls.appendChild(er);body.appendChild(ls);
+    card.appendChild(head);card.appendChild(body);el.appendChild(card);
+  });
+}
+
+function renderExam(){
+  const el=document.getElementById('exam-content');el.innerHTML='';
+  const wt=document.createElement('div');wt.className='sec-lbl';wt.textContent='📝 이번 주 모의평가 메모';el.appendChild(wt);
+  students.forEach((s,si)=>{
+    const editable=canEdit(si);
+    const st=state.students[si];
+    const card=document.createElement('div');card.className='exam-card';
+    card.innerHTML=`<div class="exam-name">🎹 ${s.name}</div><div class="exam-sub">이번 주 모의평가 내용을 기록하세요</div>`;
+    const note=document.createElement('textarea');note.className='exam-note';note.placeholder='모의평가 결과, 피드백, 연습 포인트 등을 자유롭게 적어주세요';note.value=st.examNote||'';note.rows=4;
+    if(!editable)note.disabled=true;
+    note.addEventListener('input',function(){state.students[si].examNote=this.value;scheduleSave();});
+    card.appendChild(note);
+    el.appendChild(card);
+  });
+}
+
+document.getElementById('fab').onclick=()=>{
+  const si=cur;if(si===3)return;
+  const st=state.students[si],name=students[si].name;
+  const pTotal=getPTotal(si),sTotal=getSTotal(si),goal=parseInt(st.goal)||0;
+  const rawPct=goal>0?Math.round(pTotal/goal*100):0;
+  const isExceed=goal>0&&pTotal>goal,overH=isExceed?pTotal-goal:0;
+  const activeDays=getActiveDays(si),ox=st.ox==='o'?'✅ 달성':st.ox==='x'?'❌ 미달성':'미기입';
+  const filmCount=st.filmChecks.filter(v=>v).length;
+  let dayDetails='';
+  days.forEach((d,di)=>{
+    const pm=getPMax(si,di),sm=getSMax(si,di),subj=st.subjects[di]||'미입력';
+    const ex=extras.filter((_,ei)=>st.extras[di][ei]);
+    const film=st.filmChecks[di]?'📷':'';
+    if(pm>0||sm>0) dayDetails+=`  ${d}요일  │  🎹${pm||0}h  │  📚${sm||0}h  │  ${subj}  │  ${ex.length?ex.join(' '):'-'}  ${film}\n`;
+    else dayDetails+=`  ${d}요일  │  휴식\n`;
+  });
+  const subjList=[...new Set(days.map((_,di)=>st.subjects[di]).filter(s=>s.trim()))];
+  let comment='';
+  if(pTotal===0&&sTotal===0)comment=`이번 주는 연습 기록이 없습니다. 매일 짧게라도 피아노 앞에 앉는 습관을 만들어보면 어떨까요? 🎵`;
+  else if(isExceed)comment=`이번 주 목표(${goal}h)를 ${overH}h나 초과 달성했습니다! 꾸준한 노력이 실력으로 쌓이고 있습니다 🌟`;
+  else if(rawPct>=80)comment=`피아노 목표의 ${rawPct}%를 달성했어요. 조금만 더 하면 완벽히 채울 수 있어요 💪`;
+  else if(rawPct>=50)comment=`목표의 ${rawPct}%를 달성했어요. 매일 조금씩 늘려가면 훨씬 나아질 거예요 😊`;
+  else comment=`이번 주 피아노 ${pTotal}h, 학습 ${sTotal}h 했어요. 조금씩 늘려가면 곧 목표에 도달할 수 있을 거예요 🎹`;
+  const text=`안녕하세요, ${name} 학부모님 🎹\n\n이번 주(${weekStr}) 연습 현황을 안내드립니다.\n\n━━━━━━━━━━━━━━━━━━━━\n📊 주간 요약\n━━━━━━━━━━━━━━━━━━━━\n• 🎹 피아노   :  ${pTotal}h${isExceed?` (+${overH}h 초과 🎉)`:''}\n• 📚 학습량   :  ${sTotal}h\n• 목표 시간   :  ${goal?goal+'h':'미설정'}\n• 달성률      :  ${goal?rawPct+'%'+(isExceed?' (초과!)':''):'-'}\n• 목표 달성   :  ${ox}\n• 연습일수    :  ${activeDays.length}일 / 7일\n• 촬영 완료   :  ${filmCount}일 📷\n\n━━━━━━━━━━━━━━━━━━━━\n📅 요일별 상세\n━━━━━━━━━━━━━━━━━━━━\n${dayDetails}\n━━━━━━━━━━━━━━━━━━━━\n📚 학습 과목\n━━━━━━━━━━━━━━━━━━━━\n${subjList.length?subjList.map(s=>`  • ${s}`).join('\n'):'  (기록 없음)'}\n\n━━━━━━━━━━━━━━━━━━━━\n💬 선생님 코멘트\n━━━━━━━━━━━━━━━━━━━━\n${comment}\n\n감사합니다.\n엘림 피아노학원 드림`;
+  document.getElementById('msub').textContent=`${name} · ${weekStr}`;
+  document.getElementById('fbox').textContent=text;
+  document.getElementById('mbg').classList.add('open');
+};
+document.getElementById('copybtn').onclick=()=>{
+  const text=document.getElementById('fbox').textContent;
+  navigator.clipboard.writeText(text).then(()=>showToast('복사되었어요 ✓')).catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast('복사되었어요 ✓');});
+};
+document.getElementById('clsbtn').onclick=()=>document.getElementById('mbg').classList.remove('open');
+document.getElementById('mbg').onclick=function(e){if(e.target===this)this.classList.remove('open');};
+
+let pendingRole=null;
+document.getElementById('login-btn').onclick=()=>{
+  if(loginRole!==null){loginRole=null;updateLoginUI();renderAll();showToast('로그아웃되었어요');return;}
+  document.getElementById('pin-who').style.display='';
+  document.getElementById('pin-inp-wrap').classList.remove('show');
+  document.getElementById('change-pw-wrap').classList.remove('show');
+  document.getElementById('pin-err').textContent='';document.getElementById('pin-inp').value='';
+  document.getElementById('pin-title').textContent='🔐 로그인';document.getElementById('pin-sub').textContent='누구로 로그인할까요?';
+  document.getElementById('pin-bg').classList.add('open');
+};
+document.querySelectorAll('.pwho-btn').forEach(btn=>{
+  btn.onclick=()=>{
+    const r=btn.dataset.role;pendingRole=r==='director'?'director':parseInt(r);
+    const name=r==='director'?'원장':students[parseInt(r)].name;
+    document.getElementById('pin-who').style.display='none';
+    document.getElementById('pin-inp-wrap').classList.add('show');
+    document.getElementById('pin-title').textContent=`🔐 ${name} 로그인`;
+    document.getElementById('pin-sub').textContent='비밀번호를 입력하세요';
+    document.getElementById('pin-err').textContent='';document.getElementById('pin-inp').value='';
+    if(r!=='director')document.getElementById('change-pw-wrap').classList.add('show');
+    else document.getElementById('change-pw-wrap').classList.remove('show');
+    setTimeout(()=>document.getElementById('pin-inp').focus(),100);
+  };
+});
+document.getElementById('pin-back').onclick=()=>{
+  document.getElementById('pin-who').style.display='';
+  document.getElementById('pin-inp-wrap').classList.remove('show');
+  document.getElementById('change-pw-wrap').classList.remove('show');
+  document.getElementById('pin-title').textContent='🔐 로그인';document.getElementById('pin-sub').textContent='누구로 로그인할까요?';
+};
+document.getElementById('pin-ok').onclick=()=>{
+  const val=document.getElementById('pin-inp').value;
+  if(val===passwords[pendingRole]){
+    loginRole=pendingRole;document.getElementById('pin-bg').classList.remove('open');
+    updateLoginUI();
+    if(typeof loginRole==='number'){cur=loginRole;document.getElementById('practice-panel').style.display='';document.getElementById('exam-panel').style.display='none';}
+    renderAll();
+    showToast(`${loginRole==='director'?'원장':students[loginRole].name} 모드 🔓`);
+  } else { document.getElementById('pin-err').textContent='비밀번호가 틀렸어요';document.getElementById('pin-inp').value=''; }
+};
+document.getElementById('pin-inp').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('pin-ok').click();});
+document.getElementById('pin-cancel').onclick=()=>document.getElementById('pin-bg').classList.remove('open');
+document.getElementById('change-pw-btn').onclick=()=>{
+  const val=document.getElementById('pin-inp').value,newPw=document.getElementById('new-pw-inp').value.trim();
+  if(!newPw){showToast('새 비밀번호를 입력하세요');return;}
+  if(val!==passwords[pendingRole]){document.getElementById('pin-err').textContent='현재 비밀번호가 틀렸어요';return;}
+  passwords[pendingRole]=newPw;savePw();showToast('비밀번호 변경 완료 ✓');document.getElementById('new-pw-inp').value='';
+};
+
+function renderAll(){ renderTabs();if(cur===3)renderExam();else{renderSummary();renderDays();} }
+loadState();
+</script>
+</body>
+</html>
